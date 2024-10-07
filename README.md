@@ -7,4 +7,4 @@ steps to run this tool:
 4) now terminal will ask you for the json string, simply paste the string and press enter
 
 ## screenshot of the example
-![image](https://github.com/user-attachments/assets/e9cfc8a5-9268-4cbc-9156-c3175b5ce8d4)
+![image](![image](https://github.com/user-attachments/assets/85703402-8233-4b5f-9498-980b7e927b21)
