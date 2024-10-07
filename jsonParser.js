@@ -7,12 +7,13 @@ function completeJSON(incompleteJSON) {
 
   function completeValue(value) {
     value = value.trim();
-    if (value === "" || value === "undefined") return "null";
     if (value === "{") return "{}";
     if (value === "[") return "[]";
-    if (value.startsWith('"')) return value + (value.endsWith('"') ? "" : '"');
+    if (value.startsWith('"'))
+      return value + (value.endsWith('"') && value.length > 1 ? "" : '"');
     if (isNumeric(value)) return value;
     if (value === "true" || value === "false" || value === "null") return value;
+    if (value.endsWith(",")) return "";
     return '"' + value + '"';
   }
 
@@ -68,7 +69,6 @@ function completeJSON(incompleteJSON) {
       if (char === "]") arrayDepth--;
       result += char;
       expectingValue = false;
-      expectingKey = false;
     } else if (char === ":") {
       if (currentValue) {
         result += completeValue(currentValue);
@@ -76,8 +76,7 @@ function completeJSON(incompleteJSON) {
       }
       result += char;
       expectingValue = true;
-      expectingKey = false;
-    } else if (char === ",") {
+    } else if (char === "," && incompleteJSON.at(-1) !== char) {
       if (currentValue) {
         result += completeValue(currentValue);
         currentValue = "";
@@ -86,9 +85,6 @@ function completeJSON(incompleteJSON) {
       }
       result += char;
       expectingValue = false;
-      expectingKey = true;
-    } else if (char !== " " && char !== "\n" && char !== "\t") {
-      currentValue += char;
     }
   }
 
@@ -101,7 +97,16 @@ function completeJSON(incompleteJSON) {
     !isNumeric(currentValue)
   ) {
     result += "null";
-  } else if (expectingKey && arrayDepth === 0 && currentValue) {
+  } else if (expectingKey && arrayDepth === 0) {
+    if (currentValue) {
+      result += ": null";
+    } else {
+      result += '"": null';
+    }
+  } else if (expectingKey && inString) {
+    result += '": null';
+  } else if (expectingKey && result.endsWith(",")) result = result.slice(0, -1);
+  else if (!expectingKey && !expectingValue && result.endsWith('"')) {
     result += ": null";
   }
 
@@ -116,7 +121,11 @@ function completeJSON(incompleteJSON) {
     depth--;
   }
 
-  return result;
+  try {
+    return JSON.parse(result);
+  } catch (error) {
+    return console.log(error);
+  }
 }
 
 function processJSONStream(jsonString) {
@@ -125,7 +134,7 @@ function processJSONStream(jsonString) {
   for (let i = 0; i < jsonString.length; i += 2) {
     buffer += jsonString.slice(i, i + 2);
     const result = completeJSON(buffer);
-    console.log(`Chunk: "${buffer}" \nOutput: ${result}`);
+    console.log(`Chunk: "${buffer}" \nOutput:`, result);
   }
 }
 
